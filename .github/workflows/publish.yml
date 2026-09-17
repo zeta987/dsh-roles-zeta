@@ -1,0 +1,63 @@
+# Publish to npm when a version tag is pushed.
+#
+# Trigger: `git tag v0.4.0 && git push origin v0.4.0`. The tag must equal the
+# version in package.json; the job refuses to publish a mismatch so a stale
+# package.json cannot ship under a newer tag.
+#
+# Credentials, in order of preference:
+#   1. npm trusted publishing (OIDC). Configure the trusted publisher on npmjs.com
+#      (package → Settings → Trusted Publishers: repository zeta987/dsh-roles-zeta,
+#      workflow file publish.yml). Needs no secret; `id-token: write` below is
+#      what lets npm mint the short-lived token, and provenance comes for free.
+#      No `.npmrc` may name an auth token on this path, which is why setup-node
+#      runs without `registry-url` and the token file is written only when a
+#      token exists.
+#   2. A granular access token stored as the NPM_TOKEN repository secret, used
+#      only when it is set. Either path publishes with provenance attestation.
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 bundles an older one.
+      - run: npm install -g npm@latest
+
+      - name: Check that the tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "tag v$tag does not match package.json version $version" >&2
+            exit 1
+          fi
+
+      - name: Smoke-test the package
+        run: npm run check
+
+      - name: Publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
+            echo "publishing with the NPM_TOKEN secret"
+          else
+            echo "publishing with npm trusted publishing (OIDC)"
+          fi
+          npm publish --provenance --access public

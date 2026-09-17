@@ -24,6 +24,12 @@
 #   routes:
 #     deep: { provider: deepseek-official, model: deepseek-flash }
 #
+# Three optional surfaces mount only where their host service exists and need no
+# configuration: one `/<id>` slash command per role (`commands`, `commandPrefix`),
+# the Settings → Role agents page over a few JSON routes (`settingsPage`), and a
+# watcher on the role directory (`watchRolesDir`). Set any of them to `false`
+# here to leave it out.
+#
 # `modelSelectionSettings` is deliberately absent. A standing composition with it
 # requires both a scoped preset Context and it would collide with the `subagent`
 # row that already owns the global `list_subagent_models` name. The tool reaches

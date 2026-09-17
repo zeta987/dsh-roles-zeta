@@ -1,6 +1,6 @@
 {
   "name": "dsh-roles-zeta",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files, with a roster that ships and stays overridable",
   "license": "MIT",
@@ -19,6 +19,7 @@
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -27,6 +28,7 @@
     "cordis.patch.yml",
     "README.md",
     "README.zh-TW.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "repository": {
@@ -44,15 +46,22 @@
     "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
     }
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-home-paths": "*",
+    "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-tools": "*",
     "yaml": "*"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-home-paths": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-llm": {
       "optional": true
     },
     "@deepseek-ai/dsh-tools": {
@@ -62,5 +71,8 @@
       "optional": true
     }
   },
-  "dependencies": {}
+  "dependencies": {},
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/client.js && npm pack --dry-run"
+  }
 }

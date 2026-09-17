@@ -1,4 +1,4 @@
-[English](README.md) | 繁體中文
+[English](README.md) | 繁體中文 | [简体中文](README.zh-CN.md)
 
 # dsh-roles-zeta
 
@@ -7,6 +7,8 @@
 `dsh-roles-zeta` 給 dsh agent 一支 `delegate` 工具與一個角色檔資料夾。呼叫時指定角色，角色檔提供該 child 的 persona、模型路線、reasoning effort 與工具範圍。它是同一個 `ctx.subagents` 服務之上的薄層，所以 provider、深度計算、durable descriptor、續談、子代理目錄與背景結算通知全部照舊。
 
 內建的 `subagent` 與 `subagent_fork` 沒有被取代，應該繼續掛著。它們回答的是另一個問題：讓模型在每次呼叫時從 session 允許清單裡挑路線；而角色是寫檔時就固定的綁定。
+
+工具旁邊還有三個小介面，各自只在對應的 host 服務存在時掛載：Web 輸入框裡每個角色一條斜線指令（`/reviewer <task>`）、Web 設定裡的「角色代理」頁，可新增、改名、編輯、刪除與恢復角色，以及角色目錄的監看，改動不必重新組合 profile 就會進到下一次呼叫。
 
 ## 使用
 
@@ -27,6 +29,29 @@ ls ~/.dsh/agents
 # deep-coordinator.md  hypothesis-debate.md reviewer.md       worker.md
 # .seeded.json
 ```
+
+這個 bundle 也帶了瀏覽器端，所以就算 Web profile 開著 `patchReload: live` 也要重啟一次；host 只提供組合 profile 時找到的 client bundle。
+
+### 斜線指令
+
+每個載入的角色同時也是 Web 輸入框裡的一條指令。輸入 `/` 就會看到它們和內建的 `/plan`、`/goal`、`/compact` 並列，旁邊是各自的 `when` 說明；`/reviewer look at lib/index.js` 會排進一輪對話，要求 agent 以 `reviewer` 角色呼叫 `delegate`、把這段文字當任務、在前景跑完並轉述結果。指令本身不會直接啟動 child：指令 handler 跑在任何模型回合之外，若子代理的結果根本沒回到模型手上，就沒有人能轉述它；所以委派留在對話紀錄裡，就是一次普通的工具呼叫，跟 `/plan <message>` 放訊息的位置相同。
+
+指令跟著名冊走。不管是從設定頁還是直接改目錄，新增、改名或移除角色都會重新註冊整組指令，選單自己會更新。角色 id 若撞到其他 plugin 擁有的指令名，那個角色仍可透過工具使用，只是不註冊成指令，log 會寫一行說明。row 上設 `commands: false` 就完全不掛；設 `commandPrefix` 可以把所有角色放在同一個前綴後面（`commandPrefix: "r-"` 得到 `/r-reviewer`）。
+
+### 設定頁
+
+設定 → **角色代理** 列出名冊，每個角色有標籤（內建、自訂、已修改），一次編輯一個角色：id、`when` 說明、模型路線（session 允許的路線會列成建議）、推理強度、工具範圍（目前已註冊工具的勾選清單，或「沿用全部」加上委派開關）以及角色指示。儲存會把 `<id>.md` 寫進 `$DSH_HOME/agents`，跟你手寫的是同一個檔案；工具、指令與頁面立刻跟上。
+
+除了編輯，這頁還做角色庫需要的另外兩件事：
+
+| 按鈕 | 對磁碟做的事 |
+|---|---|
+| 刪除（自訂角色） | 移除檔案 |
+| 刪除（內建角色） | 把檔案換成 `disabled: true` 的停用檔，套件內的副本就不再載入；恢復前它會列在「已停用的內建角色」 |
+| 恢復此角色 | 把套件內的檔案複製回來覆蓋你的版本，並在 manifest 裡交還給套件管理 |
+| 恢復內建角色 | 八個一起做；你自己新增的角色一律不動 |
+
+這頁是一個純瀏覽器模組，背後是 `/__dsh/roles-zeta/` 底下幾條 JSON 路由，跟其他 Web API 一樣受瀏覽器 session cookie 與 Host／Origin 信任檢查把關，寫入還要求同來源。設 `settingsPage: false` 就兩者都不掛。
 
 ### 角色檔
 
@@ -70,8 +95,10 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 |---|---|
 | 什麼都沒做 | 套件寫進去的檔案跟著套件走；新版改了角色就會更新 |
 | 改過其中一個 | 那個檔案變成你的，永遠不會再被覆蓋 |
-| 刪掉一個 | 保持刪除；manifest 記著是你移除的，不會被復活 |
+| 刪掉一個 | 不會再植入一次——但套件內的副本照樣載入，角色本身還在；要真的拿掉角色，用 `disabled` stub 或設定頁 |
 | 自己加一個 | 與出廠角色一起載入 |
+
+目錄是被監看的。不管是手動、設定頁還是別的東西存了檔，安靜一小段時間後就會重新讀取，工具 schema、斜線指令與頁面都跟著更新；設 `watchRolesDir: false` 就改回每次組合 profile 只讀一次。
 
 那個目錄裡的 `.seeded.json` 就是讓這套規則成立的 manifest——它記的是「套件寫了什麼」，不是你改了什麼。想把手上的檔案交還給套件就刪掉對應那行，想全部重來就整個刪掉，下次載入會重新結算。
 
@@ -106,6 +133,10 @@ disabled: true
 | `dshHome` | `$DSH_HOME`，否則 `~/.dsh` | 角色目錄所依據的 harness home |
 | `rolesDir` | `$DSH_HOME/agents` | 你的角色目錄：植入目標，也是覆蓋根目錄 |
 | `seedRolesDir` | `true` | 載入時把出廠名冊寫進 `rolesDir`，未被改動的會跟著套件保持最新 |
+| `watchRolesDir` | `true` | `rolesDir` 裡的檔案變動時重新載入名冊 |
+| `commands` | `true` | 在有指令登錄表的地方，每個角色註冊一條 `/<id>` 斜線指令 |
+| `commandPrefix` | （空） | 放在每個角色指令名前面的文字 |
+| `settingsPage` | `true` | 在有 web server 的地方掛載設定 API 與設定頁 |
 | `provider` | `spawn` | `ctx.subagents` 的 provider 名 |
 | `toolName` | `delegate` | 模型面工具名 |
 | `backgroundMode` | `continuable` | `continuable` 回傳 durable child id；`one-shot` 回傳 job id |
@@ -176,25 +207,6 @@ dsh plugin --profile web add dsh-roles-zeta
 
 如果那台少了內建角色指名的 provider，兩條路：把在意的那幾個角色複製到 `$DSH_HOME/agents` 再改 `route:`（複製過才會在升級時保住你的修改），或在 patch 裡加一張 `routes` 別名表一次把八個指過去。
 
-### 發布
-
-套件本身就可以發布；`files` 已經把 tarball 限制在 `lib`、`roles`、patch、兩份 README 與授權，`publishConfig.access` 是 `public`。發布前先確認：
-
-```sh
-npm pack --dry-run
-npm publish
-```
-
-套件名與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換名字重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝，因為 pnpm 是用套件名當相依鍵、`dsh.profile.bundles` 跟著那個鍵走：先加新名字，再移除舊名字。
-
-名字不帶 scope，因為套件是公開的。**只有私有套件才強制要 scope**，而 npm 的私有套件要付費方案；公開套件掛 scope 並不違法，只是沒有好處。
-
-repo 在 `github.com/zeta987/dsh-roles-zeta`，掛的 topics 是 `dsh-plugin`、`dsh`、`deepseek-harness`、`cordis`、`ai-agents`、`subagent`、`multi-agent`——前三個是每個 dsh 插件 repo 共通的慣例，其中 `dsh-plugin` 是讓插件能在 <https://github.com/topics/dsh-plugin> 被找到的那個。
-
-想改成私有發布的話，npmjs 用 `"publishConfig": { "access": "restricted" }`（需要付費方案），或指向 GitHub Packages：`"registry": "https://npm.pkg.github.com"`，並在 `.npmrc` 加 `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`。從 GitHub Packages 安裝的機器也要有同一條 scoped registry 設定，因為 `dsh plugin` 是直接在 profile 目錄轉發給 pnpm，而 pnpm 讀的是那裡或使用者家目錄的 `.npmrc`。
-
-`peerDependencies` 都標成 optional，所以 npm 與 pnpm 都不會去裝第二份 harness 套件；它們從 profile 自己的 `node_modules` 解析。
-
 ## 模型看到什麼
 
 ### 工具 schema
@@ -213,5 +225,6 @@ repo 在 `github.com/zeta987/dsh-roles-zeta`，掛的 topics 是 `dsh-plugin`、
 - **角色改變不了部署層的工作區指示鏈。** 每個 child 與父載入同一條 `AGENTS.md`／`CLAUDE.md` 鏈，所以全域語氣規則可能壓過角色自己的風格指示。
 - **沒有 per-call 路線政策。** 角色透過設定的 `agentOptions` 走線，因此 session 的 `subagent-model-selection` 允許清單管不到它們；真正把關的是 LLM adapter 的 preflight。
 - **registry 探測僅供參考。** 工具過濾器由 `ctx.tools.schemas(agent)` 建構。若 `tools.restrict()` 拒絕，會收窄過濾器並重試最多三次，所以一個過期名稱的代價是一次失敗的啟動，而不是整次委派失敗。
-- **角色檔在 plugin apply 時讀取。** 改完要等 host 重新組合 profile 才會進到新 session；沒有 watcher。
+- **斜線指令是請求，不是保證。** `/reviewer <task>` 排進一輪對話要求 agent 委派；實際呼叫由模型執行，模型若無視指示就等於沒有委派。對話紀錄會顯示實際發生了哪一種。
+- **設定頁改的是檔案，不是 session。** 已經啟動的 child 不受之後的修改影響；下一次啟動才讀新檔。
 - **沒有 per-role 記憶。** 這個 plugin 不擁有也不注入任何記憶儲存。

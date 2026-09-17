@@ -1,7 +1,7 @@
 ---
 id: log-distiller
 when: "Fast read-only log distiller that compresses long logs, CI output, and stack traces into high-signal summaries."
-route: google/gemini-3.8-flash
+route: deepseek-official/deepseek-flash
 effort: medium
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---

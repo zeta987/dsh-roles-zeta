@@ -1,7 +1,7 @@
 ---
 id: explorer
 when: "Deep read-only code explorer for mapping execution paths, dependencies, and edge cases before implementation."
-route: google/gemini-3.8-flash
+route: deepseek-official/deepseek-flash
 effort: high
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---

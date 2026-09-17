@@ -1,7 +1,7 @@
 ---
 id: code-mapper-lite
 when: "Fast read-only code mapper for narrowing relevant files, symbols, entry points, and likely call paths."
-route: google/gemini-3.8-flash
+route: deepseek-official/deepseek-flash
 effort: medium
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---

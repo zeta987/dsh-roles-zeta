@@ -1,4 +1,4 @@
-English | [繁體中文](README.zh-TW.md)
+English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
 
 # dsh-roles-zeta
 
@@ -15,6 +15,12 @@ The built-in `subagent` and `subagent_fork` tools are not replaced and should
 stay mounted. They answer a different question: they let the model pick a route
 per call from the session's allowed list, while a role is a binding fixed when
 the file is written.
+
+Around the tool sit three small surfaces, each mounted only where its host
+service exists: one slash command per role in the Web input box (`/reviewer
+<task>`), a **Role agents** page in the Web settings for adding, renaming,
+editing, deleting, and restoring roles, and a watcher on the role directory so a
+change reaches the next call without recomposing the profile.
 
 ## Use this package
 
@@ -39,6 +45,53 @@ ls ~/.dsh/agents
 # deep-coordinator.md  hypothesis-debate.md reviewer.md       worker.md
 # .seeded.json
 ```
+
+The bundle also ships a browser half, so the Web profile needs the restart even
+under `patchReload: live`; the host serves client bundles it found when the
+profile was composed.
+
+### Slash commands
+
+Every loaded role is also a command in the Web input box. Type `/` to see them
+listed with their `when` line next to the built-in `/plan`, `/goal`, and
+`/compact`; `/reviewer look at lib/index.js` queues a turn that asks the agent
+to call `delegate` with role `reviewer` and the text as the task, run it in the
+foreground, and relay the result. The command does not start the child itself:
+a handler runs outside any model turn, and a delegation whose result never
+reaches the model is one nobody reports on, so the delegation stays in the
+transcript as an ordinary tool call, where `/plan <message>` puts its message
+too.
+
+Commands follow the roster. A role added, renamed, or removed — from the
+settings page or by editing the directory — re-registers the set, and the menu
+refreshes on its own. A role whose id collides with a command another plugin
+owns keeps working through the tool and is skipped as a command, with a log line
+saying so. Set `commands: false` on the row to mount none, or `commandPrefix`
+to put every role behind a prefix (`commandPrefix: "r-"` gives `/r-reviewer`).
+
+### Settings page
+
+Settings → **Role agents** lists the roster with a badge per role (shipped,
+yours, edited) and edits one role at a time: id, the `when` line, the model
+route with the session's allowed routes offered as suggestions, the reasoning
+effort, the tool surface as a checklist of the tools registered right now (or
+"inherit everything" plus the delegation toggle), and the persona. Saving writes
+`<id>.md` into `$DSH_HOME/agents` — the same file you would write by hand — and
+the tool, the commands, and the page pick it up at once.
+
+The page also does the two things a role library needs beyond editing:
+
+| Button | What it does on disk |
+|---|---|
+| Delete, on a role you added | Removes the file |
+| Delete, on a shipped role | Replaces the file with a `disabled: true` stub, so the packaged copy stops loading; the role appears under *Disabled shipped roles* until restored |
+| Restore this role | Copies the shipped file back over yours and hands it to the manifest as the package's own |
+| Restore the shipped roles | The same for all eight; roles you added are never touched |
+
+The page is a plain browser module over a few JSON routes under
+`/__dsh/roles-zeta/`, gated by the same browser-session cookie and Host/Origin
+fence as the rest of the Web API; a write must also be same-origin. Set
+`settingsPage: false` to mount neither.
 
 ### Role files
 
@@ -87,8 +140,13 @@ where a dsh user looks for agent definitions, the same way `~/.codex/agents` and
 |---|---|
 | Nothing | Files this package wrote follow the package; a release that changes a role updates it |
 | Edit one | It becomes yours and is never overwritten again |
-| Delete one | It stays deleted; the manifest records that you removed it, so it is not restored |
+| Delete one | It is not seeded again — but the packaged copy still loads, so the role stays available; remove the role itself with a `disabled` stub or the settings page |
 | Add one of your own | It loads alongside the shipped roles |
+
+The directory is watched. A file saved by hand, by the settings page, or by
+anything else is re-read after a short quiet period, and the tool schema, the
+slash commands, and the page follow; set `watchRolesDir: false` to read the
+directory once per composition instead.
 
 `.seeded.json` in that directory is the manifest that makes this work — it records
 what the package wrote, not what you changed. Delete a line there to hand a file
@@ -130,6 +188,10 @@ files name their own route and the plugin resolves it.
 | `dshHome` | `$DSH_HOME`, else `~/.dsh` | Harness home the role directory is derived from |
 | `rolesDir` | `$DSH_HOME/agents` | Your role directory: the seed target and the override root |
 | `seedRolesDir` | `true` | Write the shipped roster into `rolesDir` on load, and keep it current while unedited |
+| `watchRolesDir` | `true` | Reload the roster when a file in `rolesDir` changes |
+| `commands` | `true` | Register one `/<id>` slash command per role where the command registry exists |
+| `commandPrefix` | (empty) | Text placed before every role's command name |
+| `settingsPage` | `true` | Mount the settings API and page where the web server exists |
 | `provider` | `spawn` | `ctx.subagents` provider name |
 | `toolName` | `delegate` | Model-facing tool name |
 | `backgroundMode` | `continuable` | `continuable` returns a durable child id; `one-shot` returns a job id |
@@ -246,48 +308,6 @@ If the target machine lacks a provider the shipped roles name, either change the
 first, so an upgrade does not overwrite the change — or add a `routes` alias
 table to point all eight at once from one place.
 
-### Publishing
-
-The package is publishable as-is; `files` already limits the tarball to `lib`,
-`roles`, the patch, both READMEs and the license, and
-`publishConfig.access` is `public`. Verify before publishing:
-
-```sh
-npm pack --dry-run
-npm publish
-```
-
-The package name is coupled to the bundle patch: the row's `name` is the
-package's own name, so republishing under a different name means editing both
-`package.json` and `cordis.patch.yml`. Reinstalling after a rename is required,
-because pnpm keys the dependency by the package name and `dsh.profile.bundles`
-follows that key: add the new name, then remove the old one.
-
-The name is unscoped because the package is public. A scoped name is only
-required for a private package, which npm serves on a paid plan; publishing
-publicly under a scope is allowed but buys nothing.
-
-The repository lives at `github.com/zeta987/dsh-roles-zeta` and carries the
-community topics `dsh-plugin`, `dsh`, `deepseek-harness`, `cordis`, `ai-agents`,
-`subagent`, and `multi-agent` — the first three are the convention every dsh
-plugin repo shares. `dsh-plugin` is what makes a plugin discoverable at
-<https://github.com/topics/dsh-plugin>.
-
-To publish it privately instead, set `publishConfig` to
-`{ "access": "restricted" }` on npmjs (needs a paid plan), or point it at
-GitHub Packages with `"registry": "https://npm.pkg.github.com"` and an `.npmrc`
-carrying `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`. A machine installing
-from GitHub Packages needs the same scoped registry line, because `dsh plugin`
-forwards straight to pnpm in the profile directory and pnpm reads `.npmrc` from
-there or from the user's home.
-
-`peerDependencies` are marked optional so neither npm nor pnpm tries to install a
-second copy of the harness packages; they resolve from the profile's own
-`node_modules`.
-
-Restart the profile's host after installing; additions to `dsh.profile.bundles`
-are read when the profile is composed.
-
 ## Model Experience
 
 ### Tool schema
@@ -333,6 +353,10 @@ returns `started subagent <id>` and settles through the runtime's notice.
   `ctx.tools.schemas(agent)`. A rejection from `tools.restrict()` narrows the
   filter and retries up to three times, so a stale name costs one failed start
   rather than a failed delegation.
-- **Role files are read at plugin apply time.** Editing one reaches new sessions
-  after the host composes the profile again; there is no watcher.
+- **A slash command is a request, not a guarantee.** `/reviewer <task>` queues a
+  turn that tells the agent to delegate; the model performs the call, so a
+  model that ignores the instruction has not delegated. The transcript shows
+  which happened.
+- **The settings page edits files, not sessions.** A role a running child was
+  started from is unaffected by a later edit; the next start reads the new file.
 - **No per-role memory.** The plugin owns no memory store and injects none.

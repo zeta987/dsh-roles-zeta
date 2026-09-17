@@ -1,7 +1,7 @@
 ---
 id: triage
 when: "Fast read-only triage agent for classifying failures, narrowing likely problem areas, and routing follow-up work."
-route: google/gemini-3.8-flash
+route: deepseek-official/deepseek-flash
 effort: high
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---
