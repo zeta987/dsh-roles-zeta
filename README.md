@@ -198,10 +198,12 @@ once.
 ### Publishing
 
 The package is publishable as-is; `files` already limits the tarball to `lib`,
-`examples`, the patch, both READMEs and the license. Verify before publishing:
+`examples`, the patch, both READMEs and the license, and
+`publishConfig.access` is `public`. Verify before publishing:
 
 ```sh
 npm pack --dry-run
+npm publish
 ```
 
 The scope is coupled to the bundle patch: the row's `name` is the package's own
@@ -214,21 +216,19 @@ dsh plugin --profile web add <new specifier>
 dsh plugin --profile web remove <old package name>
 ```
 
-For a private GitHub repository, the repository field already points at
-`github.com/zeta987/dsh-role-agents`; change it if the repo name differs. A
-private repo install needs git credentials (an SSH key, or a token in the URL).
+The repository lives at `github.com/zeta987/dsh-role-agents` and carries the
+community topics `dsh-plugin`, `dsh`, `deepseek-harness`, `cordis`, `ai-agents`,
+`subagent`, and `multi-agent` — the first three are the convention every dsh
+plugin repo shares. `dsh-plugin` is what makes a plugin discoverable at
+<https://github.com/topics/dsh-plugin>.
 
-For a private npm package, `publishConfig.access` is `restricted` and the name is
-scoped. Two registries work:
-
-- **npmjs** with `"publishConfig": { "access": "restricted" }` — needs a paid npm
-  plan for private packages.
-- **GitHub Packages**, free and private with the repo, by pointing
-  `publishConfig` at `"registry": "https://npm.pkg.github.com"` and adding an
-  `.npmrc` with a `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}` line. The
-  installing machine needs the same registry line for the scope, because
-  `dsh plugin` forwards straight to pnpm in the profile directory and pnpm reads
-  `.npmrc` from there or from the user's home.
+To publish it privately instead, set `publishConfig` to
+`{ "access": "restricted" }` on npmjs (needs a paid plan), or point it at
+GitHub Packages with `"registry": "https://npm.pkg.github.com"` and an `.npmrc`
+carrying `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`. A machine installing
+from GitHub Packages needs the same scoped registry line, because `dsh plugin`
+forwards straight to pnpm in the profile directory and pnpm reads `.npmrc` from
+there or from the user's home.
 
 `peerDependencies` are marked optional so neither npm nor pnpm tries to install a
 second copy of the harness packages; they resolve from the profile's own

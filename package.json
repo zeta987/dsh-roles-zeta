@@ -6,10 +6,12 @@
   "license": "MIT",
   "keywords": [
     "dsh-plugin",
-    "deepseek-harness",
     "dsh",
+    "deepseek-harness",
+    "cordis",
+    "ai-agents",
     "subagent",
-    "agents"
+    "multi-agent"
   ],
   "engines": {
     "node": ">=22.19.0"
@@ -36,7 +38,7 @@
     "url": "https://github.com/zeta987/dsh-role-agents/issues"
   },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "dsh": {
     "manifestVersion": 1,

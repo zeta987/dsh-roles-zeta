@@ -141,10 +141,11 @@ dsh plugin --profile web add github:<owner>/<repo>
 
 ### 發布
 
-套件本身就可以發布；`files` 已經把 tarball 限制在 `lib`、`examples`、patch、兩份 README 與授權。發布前先確認：
+套件本身就可以發布；`files` 已經把 tarball 限制在 `lib`、`examples`、patch、兩份 README 與授權，`publishConfig.access` 是 `public`。發布前先確認：
 
 ```sh
 npm pack --dry-run
+npm publish
 ```
 
 scope 與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換 scope 重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝——pnpm 是用套件名當相依鍵，`dsh.profile.bundles` 跟著那個鍵走：
@@ -154,12 +155,9 @@ dsh plugin --profile web add <新的 specifier>
 dsh plugin --profile web remove <舊的套件名>
 ```
 
-私有 GitHub repo：`repository` 已指向 `github.com/zeta987/dsh-role-agents`，repo 名稱不同就改掉。私有 repo 安裝需要 git 憑證（SSH key，或把 token 放進 URL）。
+repo 在 `github.com/zeta987/dsh-role-agents`，掛的 topics 是 `dsh-plugin`、`dsh`、`deepseek-harness`、`cordis`、`ai-agents`、`subagent`、`multi-agent`——前三個是每個 dsh 插件 repo 共通的慣例，其中 `dsh-plugin` 是讓插件能在 <https://github.com/topics/dsh-plugin> 被找到的那個。
 
-私有 npm 套件：`publishConfig.access` 是 `restricted`，名稱也已 scoped。兩種 registry 都可行：
-
-- **npmjs**，用 `"publishConfig": { "access": "restricted" }`——私有套件需要付費 npm 方案。
-- **GitHub Packages**，跟著 repo 免費且私有：把 `publishConfig` 指向 `"registry": "https://npm.pkg.github.com"`，並在 `.npmrc` 加一行 `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`。安裝端的 `.npmrc` 也要有同一條 scoped registry 設定，因為 `dsh plugin` 是直接在 profile 目錄轉發給 pnpm，而 pnpm 讀的是那裡或使用者家目錄的 `.npmrc`。
+想改成私有發布的話，npmjs 用 `"publishConfig": { "access": "restricted" }`（需要付費方案），或指向 GitHub Packages：`"registry": "https://npm.pkg.github.com"`，並在 `.npmrc` 加 `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`。從 GitHub Packages 安裝的機器也要有同一條 scoped registry 設定，因為 `dsh plugin` 是直接在 profile 目錄轉發給 pnpm，而 pnpm 讀的是那裡或使用者家目錄的 `.npmrc`。
 
 `peerDependencies` 都標成 optional，所以 npm 與 pnpm 都不會去裝第二份 harness 套件；它們從 profile 自己的 `node_modules` 解析。
 
