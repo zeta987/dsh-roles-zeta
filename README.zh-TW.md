@@ -48,7 +48,7 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 ```yaml
 - insert:
     - id: role-agents
-      name: '@zeta987/dsh-role-agents'
+      name: dsh-role-agents
       config:
         provider: spawn
         toolName: delegate
@@ -111,8 +111,8 @@ host-plane row 對每個 preset 的每個 agent 都可見，所以不需要複�
 # 會從 profile 的 node_modules 解析。
 dsh plugin --profile web add github:<owner>/<repo>
 
-# 從 registry 安裝（公開或私有，需 scoped 名稱）。
-dsh plugin --profile web add @<scope>/dsh-role-agents
+# 從 registry 安裝（公開或私有）。
+dsh plugin --profile web add dsh-role-agents
 
 # 從複製或 clone 下來的目錄安裝：`file:` 會複製進去（同樣的性質）。
 dsh plugin --profile web add file:<這個目錄的路徑>
@@ -148,12 +148,14 @@ npm pack --dry-run
 npm publish
 ```
 
-scope 與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換 scope 重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝——pnpm 是用套件名當相依鍵，`dsh.profile.bundles` 跟著那個鍵走：
+套件名與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換名字重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝——pnpm 是用套件名當相依鍵，`dsh.profile.bundles` 跟著那個鍵走：
 
 ```sh
-dsh plugin --profile web add <新的 specifier>
-dsh plugin --profile web remove <舊的套件名>
+dsh plugin --profile web add <新的名字>
+dsh plugin --profile web remove <舊的名字>
 ```
+
+名字不帶 scope，因為套件是公開的。**只有私有套件才強制要 scope**，而 npm 的私有套件要付費方案；公開套件掛 scope 並不違法，只是沒有好處。
 
 repo 在 `github.com/zeta987/dsh-role-agents`，掛的 topics 是 `dsh-plugin`、`dsh`、`deepseek-harness`、`cordis`、`ai-agents`、`subagent`、`multi-agent`——前三個是每個 dsh 插件 repo 共通的慣例，其中 `dsh-plugin` 是讓插件能在 <https://github.com/topics/dsh-plugin> 被找到的那個。
 

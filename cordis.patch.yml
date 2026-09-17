@@ -33,7 +33,10 @@
 
 - insert:
     - id: role-agents
-      name: '@zeta987/dsh-role-agents'
+      # The row names this package by its own package name, the same way a
+      # bundle patch normally does. A fork republished under another name must
+      # update this line to match.
+      name: dsh-role-agents
       config:
         provider: spawn
         toolName: delegate

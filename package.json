@@ -1,5 +1,5 @@
 {
-  "name": "@zeta987/dsh-role-agents",
+  "name": "dsh-role-agents",
   "version": "0.1.0",
   "type": "module",
   "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files",

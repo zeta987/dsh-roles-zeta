@@ -60,7 +60,7 @@ Delegation is opt-in because every source definition that is a leaf says so.
 ```yaml
 - insert:
     - id: role-agents
-      name: '@zeta987/dsh-role-agents'
+      name: dsh-role-agents
       config:
         provider: spawn
         toolName: delegate
@@ -157,8 +157,8 @@ needed; moving the row into your own preset instead scopes it to that preset.
 # package's own peer imports resolve from the profile's node_modules.
 dsh plugin --profile web add github:<owner>/<repo>
 
-# From a registry, public or private (scoped name).
-dsh plugin --profile web add @<scope>/dsh-role-agents
+# From a registry, public or private.
+dsh plugin --profile web add dsh-role-agents
 
 # From a cloned or copied directory: `file:` copies it in (same property).
 dsh plugin --profile web add file:<path to this directory>
@@ -206,15 +206,20 @@ npm pack --dry-run
 npm publish
 ```
 
-The scope is coupled to the bundle patch: the row's `name` is the package's own
-name, so republishing under a different scope means editing both `package.json`
-and `cordis.patch.yml`. Reinstalling after a rename is required — pnpm keys the
-dependency by the package name, and `dsh.profile.bundles` follows that key:
+The package name is coupled to the bundle patch: the row's `name` is the
+package's own name, so republishing under a different name means editing both
+`package.json` and `cordis.patch.yml`. Reinstalling after a rename is required —
+pnpm keys the dependency by the package name, and `dsh.profile.bundles` follows
+that key:
 
 ```sh
-dsh plugin --profile web add <new specifier>
-dsh plugin --profile web remove <old package name>
+dsh plugin --profile web add <new name>
+dsh plugin --profile web remove <old name>
 ```
+
+The name is unscoped because the package is public. A scoped name is only
+required for a private package, which npm serves on a paid plan; publishing
+publicly under a scope is allowed but buys nothing.
 
 The repository lives at `github.com/zeta987/dsh-role-agents` and carries the
 community topics `dsh-plugin`, `dsh`, `deepseek-harness`, `cordis`, `ai-agents`,
