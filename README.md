@@ -23,9 +23,28 @@ the file is written.
 
 ## Use this package
 
+### Install
+
+```sh
+# 1. Install the bundle into each profile that will use it.
+#    Profiles are separate install roots, so one profile does not see another's.
+dsh plugin --profile web add dsh-role-agents
+
+# 2. Copy the role files into place.
+#    The package ships eight of them; the plugin reads $DSH_HOME/agents
+#    ($DSH_HOME defaults to ~/.dsh).
+mkdir -p "$HOME/.dsh/agents"
+cp node_modules/dsh-role-agents/examples/roles/*.md "$HOME/.dsh/agents/"
+
+# 3. Restart the host. Bundle lists are read when a profile is composed.
+```
+
+Then a new session has a `delegate` tool whose description lists the roles.
+Nothing else needs configuring: no preset copy, no model table.
+
 ### Role files
 
-One Markdown file per role under the configured directory (`~/.dsh/agents` by
+One Markdown file per role under the configured directory (`$DSH_HOME/agents` by
 default). Frontmatter carries the machine fields; the body is the child's
 `deployment:persona-prefix` section.
 
@@ -33,8 +52,8 @@ default). Frontmatter carries the machine fields; the body is the child's
 ---
 id: reviewer
 when: Deep read-only reviewer for correctness, regressions, edge cases, and missing tests.
-route: deep
-effort: xhigh
+route: deepseek-official/deepseek-flash
+effort: high
 allow: [read, glob, grep, web_search, web_fetch, skill]
 ---
 
@@ -74,7 +93,7 @@ files name their own route and the plugin resolves it.
 | Field | Default | Meaning |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`, else `~/.dsh` | Harness home the role directory is derived from |
-| `rolesDir` | `<dshHome>/agents` | Directory scanned for `*.md` role files |
+| `rolesDir` | `$DSH_HOME/agents` | Directory scanned for `*.md` role files |
 | `provider` | `spawn` | `ctx.subagents` provider name |
 | `toolName` | `delegate` | Model-facing tool name |
 | `backgroundMode` | `continuable` | `continuable` returns a durable child id; `one-shot` returns a job id |
@@ -153,22 +172,21 @@ A host-plane row is visible to every agent in every preset, so no preset copy is
 needed; moving the row into your own preset instead scopes it to that preset.
 
 ```sh
-# From a git host. pnpm materializes real files inside the profile, so the
-# package's own peer imports resolve from the profile's node_modules.
-dsh plugin --profile web add github:<owner>/<repo>
-
-# From a registry, public or private.
+# From npm.
 dsh plugin --profile web add dsh-role-agents
 
-# From a cloned or copied directory: `file:` copies it in (same property).
-dsh plugin --profile web add file:<path to this directory>
+# Straight from the repository, if you would rather track it directly.
+dsh plugin --profile web add github:zeta987/dsh-role-agents
+
+# From a local clone, while developing this plugin.
+dsh plugin --profile web add file:./dsh-role-agents
 ```
 
-Use `link:` instead of `file:` only while developing the plugin: `link:`
-symlinks the source directory, so Node resolves the package's peer imports from
-the source's real path and needs a `node_modules` junction beside it (see
-`.gitignore`). `file:`, git and registry installs are copies, so edits reach the
-host only after re-running the command.
+`github:` and `file:` installs are copies, so edits to a clone reach the host
+only after re-running the command. Use `link:` instead of `file:` only while
+developing: `link:` symlinks the source directory, so Node resolves the package's
+peer imports from the source's real path and needs a `node_modules` junction
+beside it (see `.gitignore`).
 
 Restart the profile's host after installing; additions to `dsh.profile.bundles`
 are read when the profile is composed.
@@ -176,19 +194,21 @@ are read when the profile is composed.
 ### Installing on another machine
 
 ```sh
-# 1. Get the package there (clone, copy, or a registry install).
+# 1. Install the bundle into each profile that will use it.
+dsh plugin --profile web add dsh-role-agents
 
-# 2. Install it into each profile you use.
-dsh plugin --profile web add github:<owner>/<repo>
+# 2. Put the role files where the plugin looks for them.
+#    The published package ships them, so copy them straight out of node_modules:
+#      $DSH_HOME/profiles/web/node_modules/dsh-role-agents/examples/roles/*.md
+#    into
+#      $DSH_HOME/agents/          ($DSH_HOME defaults to ~/.dsh)
+#    Create the directory if it does not exist. Cloning the repository and
+#    copying its examples/roles/ works just as well.
 
-# 3. Put the role files where the plugin looks for them.
-#    Copy examples/roles/*.md from this repository into <dshHome>/agents/
-#    ($DSH_HOME, else ~/.dsh). Create the directory if it does not exist.
-
-# 4. Restart the host.
+# 3. Restart the host.
 ```
 
-**No configuration needs editing.** Each role file already names its own
+No configuration needs editing. Each role file already names its own
 `provider/model`, and the plugin resolves those against whatever providers the
 target machine registers, so the only requirement is that the machine has those
 providers configured and credentialed. If it does not, change the `route:` line
@@ -208,14 +228,9 @@ npm publish
 
 The package name is coupled to the bundle patch: the row's `name` is the
 package's own name, so republishing under a different name means editing both
-`package.json` and `cordis.patch.yml`. Reinstalling after a rename is required —
-pnpm keys the dependency by the package name, and `dsh.profile.bundles` follows
-that key:
-
-```sh
-dsh plugin --profile web add <new name>
-dsh plugin --profile web remove <old name>
-```
+`package.json` and `cordis.patch.yml`. Reinstalling after a rename is required,
+because pnpm keys the dependency by the package name and `dsh.profile.bundles`
+follows that key: add the new name, then remove the old one.
 
 The name is unscoped because the package is public. A scoped name is only
 required for a private package, which npm serves on a paid plan; publishing

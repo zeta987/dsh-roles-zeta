@@ -15,16 +15,34 @@ kind: "package-reference"
 
 ## 使用
 
+### 安裝
+
+```sh
+# 1. 裝進你會用到的每個 profile。
+#    profile 是各自獨立的安裝根，裝進一個對另一個不可見。
+dsh plugin --profile web add dsh-role-agents
+
+# 2. 把角色檔放到位。
+#    套件裡已經附了八個；插件讀的是 $DSH_HOME/agents
+#    （$DSH_HOME 預設是 ~/.dsh）。
+mkdir -p "$HOME/.dsh/agents"
+cp node_modules/dsh-role-agents/examples/roles/*.md "$HOME/.dsh/agents/"
+
+# 3. 重啟 host。bundle 清單是在組合 profile 時讀取的。
+```
+
+之後新開的 session 就會有一支 `delegate` 工具，描述裡列出所有角色。其他都不用設：不用複製 preset，也不用任何模型表。
+
 ### 角色檔
 
-每個角色一個 Markdown 檔，放在設定的目錄（預設 `~/.dsh/agents`）。frontmatter 放機器欄位，正文是 child 的 `deployment:persona-prefix` section。
+每個角色一個 Markdown 檔，放在設定的目錄（預設 `$DSH_HOME/agents`）。frontmatter 放機器欄位，正文是 child 的 `deployment:persona-prefix` section。
 
 ```markdown
 ---
 id: reviewer
 when: Deep read-only reviewer for correctness, regressions, edge cases, and missing tests.
-route: deep
-effort: xhigh
+route: deepseek-official/deepseek-flash
+effort: high
 allow: [read, glob, grep, web_search, web_fetch, skill]
 ---
 
@@ -61,7 +79,7 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 | 欄位 | 預設 | 語意 |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`，否則 `~/.dsh` | 角色目錄所依據的 harness home |
-| `rolesDir` | `<dshHome>/agents` | 掃描 `*.md` 角色檔的目錄 |
+| `rolesDir` | `$DSH_HOME/agents` | 掃描 `*.md` 角色檔的目錄 |
 | `provider` | `spawn` | `ctx.subagents` 的 provider 名 |
 | `toolName` | `delegate` | 模型面工具名 |
 | `backgroundMode` | `continuable` | `continuable` 回傳 durable child id；`one-shot` 回傳 job id |
@@ -107,34 +125,34 @@ effort 完全不需要配置。每條路線的 adapter 會透過 `LlmResolvedMod
 host-plane row 對每個 preset 的每個 agent 都可見，所以不需要複製 preset；把 row 改放進自己的 preset 則會把它限定在那個 preset。
 
 ```sh
-# 從 git 主機安裝。pnpm 會把實體檔案放進 profile，所以套件自己的 peer import
-# 會從 profile 的 node_modules 解析。
-dsh plugin --profile web add github:<owner>/<repo>
-
-# 從 registry 安裝（公開或私有）。
+# 從 npm 安裝。
 dsh plugin --profile web add dsh-role-agents
 
-# 從複製或 clone 下來的目錄安裝：`file:` 會複製進去（同樣的性質）。
-dsh plugin --profile web add file:<這個目錄的路徑>
+# 直接跟 repo 走，如果你想盯著原始碼。
+dsh plugin --profile web add github:zeta987/dsh-role-agents
+
+# 從本機 clone 安裝，開發這個插件時用。
+dsh plugin --profile web add file:./dsh-role-agents
 ```
 
-只有在開發這個 plugin 時才用 `link:`：`link:` 是 symlink 來源目錄，Node 會從來源的 realpath 解析套件的 peer import，因此旁邊需要一個 `node_modules` junction（見 `.gitignore`）。`file:`、git 與 registry 安裝都是複製品，所以改完要重跑命令才會進到 host。
+`github:` 與 `file:` 都是複製品，所以改完 clone 要重跑命令才會進到 host。只有在開發這個 plugin 時才用 `link:`：`link:` 是 symlink 來源目錄，Node 會從來源的 realpath 解析套件的 peer import，因此旁邊需要一個 `node_modules` junction（見 `.gitignore`）。
 
 安裝後要重啟該 profile 的 host；`dsh.profile.bundles` 的新增項目是在組合 profile 時讀取的。
 
 ### 在另一台電腦安裝
 
 ```sh
-# 1. 把套件弄過去（clone、複製，或從 registry 安裝）。
+# 1. 裝進你會用到的每個 profile。
+dsh plugin --profile web add dsh-role-agents
 
-# 2. 裝進你會用到的每個 profile。
-dsh plugin --profile web add github:<owner>/<repo>
+# 2. 把角色檔放到插件讀取的位置。
+#    發布的套件裡就有，所以直接從 node_modules 複製：
+#      $DSH_HOME/profiles/web/node_modules/dsh-role-agents/examples/roles/*.md
+#    複製到
+#      $DSH_HOME/agents/          （$DSH_HOME 預設是 ~/.dsh）
+#    目錄不存在就建立。clone 這個 repo 再複製它的 examples/roles/ 也一樣。
 
-# 3. 把角色檔放到插件讀取的位置。
-#    把本 repo 的 examples/roles/*.md 複製到 <dshHome>/agents/
-#    （$DSH_HOME，否則 ~/.dsh）。目錄不存在就建立。
-
-# 4. 重啟 host。
+# 3. 重啟 host。
 ```
 
 **沒有需要改的設定。** 角色檔已經各自指名 `provider/model`，插件會用那台機器自己註冊的 provider 目錄解析；只要那台有這兩個 provider 與憑證就好。如果它沒有一樣的 provider，改角色檔的 `route:` 一行，或在 patch 裡加一張 `routes` 別名表把八個角色指過去。
@@ -148,12 +166,7 @@ npm pack --dry-run
 npm publish
 ```
 
-套件名與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換名字重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝——pnpm 是用套件名當相依鍵，`dsh.profile.bundles` 跟著那個鍵走：
-
-```sh
-dsh plugin --profile web add <新的名字>
-dsh plugin --profile web remove <舊的名字>
-```
+套件名與 bundle patch 是連動的：patch row 的 `name` 就是套件自己的名字，所以換名字重新發布時 `package.json` 與 `cordis.patch.yml` 兩邊都要改。改名後一定要重裝，因為 pnpm 是用套件名當相依鍵、`dsh.profile.bundles` 跟著那個鍵走：先加新名字，再移除舊名字。
 
 名字不帶 scope，因為套件是公開的。**只有私有套件才強制要 scope**，而 npm 的私有套件要付費方案；公開套件掛 scope 並不違法，只是沒有好處。
 
