@@ -53,19 +53,33 @@ profile was composed.
 #### Updating
 
 Nothing updates on its own. `dsh plugin` forwards to pnpm inside the profile,
-which records the version it resolved in the profile's lockfile, and starting
-the host installs nothing. A new release reaches a profile only when you ask
-for it:
+starting the host installs nothing, and neither the host nor the Plugins page
+checks a registry or shows a newer version. A release reaches a profile only
+when you ask for it:
 
 ```sh
-dsh plugin --profile web add dsh-roles-zeta@latest
+dsh plugin --profile web outdated                    # is there a newer version?
+dsh plugin --profile web add dsh-roles-zeta@latest   # move to it
 # restart the host
 ```
 
-Name the version explicitly: the `^0.x` range pnpm wrote at install time does
-not cross a minor bump, so `pnpm update` alone stays on the old line. Role files
-you edited are left alone by the update; the shipped ones you never touched are
-refreshed on the next load.
+`add <pkg>@latest` pins the exact version it resolved. `update <pkg>` stays
+inside the range pnpm wrote at install time, and a `^0.x` caret does not cross
+a minor bump, so on a 0.x line it moves nothing; `update --latest <pkg>` also
+crosses it. The restart is required: a running host keeps the package it
+mounted, even under `patchReload: live`.
+
+pnpm 11 and later refuse a version published less than 24 hours ago
+(`minimumReleaseAge`, default 1440 minutes). To install a release the day it
+ships, exempt the package in the profile's `pnpm-workspace.yaml`:
+
+```yaml
+minimumReleaseAgeExclude:
+  - dsh-roles-zeta
+```
+
+Role files you edited are left alone by an update; the shipped ones you never
+touched are refreshed on the next load.
 
 ### Slash commands
 

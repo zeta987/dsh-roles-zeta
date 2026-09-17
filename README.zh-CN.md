@@ -34,14 +34,24 @@ ls ~/.dsh/agents
 
 #### 更新
 
-不会自动更新。`dsh plugin` 是在 profile 目录里转发给 pnpm，解析到的版本会记在 profile 的 lockfile；启动 host 不会安装任何东西。新版本只有在你主动要求时才会进到 profile：
+不会自动更新。`dsh plugin` 是在 profile 目录里转发给 pnpm，启动 host 不会安装任何东西，host 与 Plugins 设置页也都不查 registry、不显示新版本。新版本只有在你主动要求时才会进到 profile：
 
 ```sh
-dsh plugin --profile web add dsh-roles-zeta@latest
+dsh plugin --profile web outdated                    # 有没有更新的版本？
+dsh plugin --profile web add dsh-roles-zeta@latest   # 换上去
 # 重启 host
 ```
 
-版本要明确写出：安装时 pnpm 写下的 `^0.x` 范围不会跨过 minor 版本号，单靠 `pnpm update` 会停在旧的那条线上。你改过的角色文件更新时不会动；没碰过的内置角色会在下次加载时刷新。
+`add <pkg>@latest` 会把解析到的版本精确写死。`update <pkg>` 只在安装时 pnpm 写下的范围内移动，而 `^0.x` 的 caret 不会跨过 minor 版本号，所以在 0.x 这条线上它什么都不会动；`update --latest <pkg>` 也能跨过去。重启是必需的：运行中的 host 会一直用它挂载时的那个包，开着 `patchReload: live` 也一样。
+
+pnpm 11 起会拒绝发布未满 24 小时的版本（`minimumReleaseAge`，默认 1440 分钟）。想在发布当天就装到，在 profile 的 `pnpm-workspace.yaml` 里把包排除：
+
+```yaml
+minimumReleaseAgeExclude:
+  - dsh-roles-zeta
+```
+
+你改过的角色文件更新时不会动；没碰过的内置角色会在下次加载时刷新。
 
 ### 斜杠指令
 
