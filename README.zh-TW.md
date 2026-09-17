@@ -13,24 +13,17 @@
 ### 安裝
 
 ```sh
-# 1. 裝進你會用到的每個 profile。
-#    profile 是各自獨立的安裝根，裝進一個對另一個不可見。
+# 裝進你會用到的每個 profile。profile 是各自獨立的安裝根，裝進一個對另一個不可見。
 dsh plugin --profile web add dsh-roles-zeta
 
-# 2. 把角色檔放到位。
-#    套件裡已經附了八個；插件讀的是 $DSH_HOME/agents
-#    （$DSH_HOME 預設是 ~/.dsh）。
-mkdir -p "$HOME/.dsh/agents"
-cp node_modules/dsh-roles-zeta/examples/roles/*.md "$HOME/.dsh/agents/"
-
-# 3. 重啟 host。bundle 清單是在組合 profile 時讀取的。
+# 重啟 host。bundle 清單是在組合 profile 時讀取的。
 ```
 
-之後新開的 session 就會有一支 `delegate` 工具，描述裡列出所有角色。其他都不用設：不用複製 preset，也不用任何模型表。
+這樣就裝完了。之後新開的 session 會有一支 `delegate` 工具，描述裡列出八個角色——不用複製 preset、不用任何模型表、也不用自己放任何檔案：名冊隨套件出貨，直接從套件裡讀。
 
 ### 角色檔
 
-每個角色一個 Markdown 檔，放在設定的目錄（預設 `$DSH_HOME/agents`）。frontmatter 放機器欄位，正文是 child 的 `deployment:persona-prefix` section。
+一個角色就是一個 Markdown 檔。frontmatter 放機器欄位，正文是 child 的 `deployment:persona-prefix` section。
 
 ```markdown
 ---
@@ -53,8 +46,34 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 | `effort` | 否 | 角色詞彙的 effort，按 route 轉譯 |
 | `allow` | 否 | child 保留的全域工具名；省略則全部繼承 |
 | `delegation` | 否 | 沒有 `allow` 清單的角色要設 `true` 才保留委派工具 |
+| `disabled` | 否 | `true` 移除隨套件出貨的角色，不需要寫替代正文 |
 
 有 `allow` 清單的角色除非清單內含委派工具，否則不能再委派；沒有清單的角色除非設 `delegation: true`，否則也不行。委派是 opt-in，因為來源定義裡每個葉節點角色都明文如此。
+
+#### 角色是從哪裡載入的
+
+兩層，依序套用，後面的蓋掉前面的：
+
+1. **套件內建名冊**——`<套件>/roles/*.md`，出貨的八個；
+2. **`$DSH_HOME/agents`**——你自己的目錄，`$DSH_HOME` 預設 `~/.dsh`。
+
+所以內建角色裝好就能用，而你放進自己目錄的檔案會**按 id 取代**內建的那個。要改內建角色，先複製出來：
+
+```sh
+cp node_modules/dsh-roles-zeta/roles/reviewer.md "$HOME/.dsh/agents/reviewer.md"
+$EDITOR "$HOME/.dsh/agents/reviewer.md"
+```
+
+不要的角色用只帶 id 的 stub 移除：
+
+```markdown
+---
+id: hypothesis-debate
+disabled: true
+---
+```
+
+插件**永遠不會**主動把檔案複製進你的目錄，所以內建名冊會隨套件一起更新，你的覆蓋檔也一直是你自己的。同一個目錄裡重複的 id 會保留第一個並警告；你自己目錄裡的 `disabled` stub 一定蓋過內建角色。
 
 ### 設定
 
@@ -74,7 +93,7 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 | 欄位 | 預設 | 語意 |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`，否則 `~/.dsh` | 角色目錄所依據的 harness home |
-| `rolesDir` | `$DSH_HOME/agents` | 掃描 `*.md` 角色檔的目錄 |
+| `rolesDir` | `$DSH_HOME/agents` | 你自己的角色目錄，會按 id 覆蓋內建名冊 |
 | `provider` | `spawn` | `ctx.subagents` 的 provider 名 |
 | `toolName` | `delegate` | 模型面工具名 |
 | `backgroundMode` | `continuable` | `continuable` 回傳 durable child id；`one-shot` 回傳 job id |
@@ -137,24 +156,17 @@ dsh plugin --profile web add file:./dsh-roles-zeta
 ### 在另一台電腦安裝
 
 ```sh
-# 1. 裝進你會用到的每個 profile。
 dsh plugin --profile web add dsh-roles-zeta
-
-# 2. 把角色檔放到插件讀取的位置。
-#    發布的套件裡就有，所以直接從 node_modules 複製：
-#      $DSH_HOME/profiles/web/node_modules/dsh-roles-zeta/examples/roles/*.md
-#    複製到
-#      $DSH_HOME/agents/          （$DSH_HOME 預設是 ~/.dsh）
-#    目錄不存在就建立。clone 這個 repo 再複製它的 examples/roles/ 也一樣。
-
-# 3. 重啟 host。
+# 重啟 host
 ```
 
-**沒有需要改的設定。** 角色檔已經各自指名 `provider/model`，插件會用那台機器自己註冊的 provider 目錄解析；只要那台有這兩個 provider 與憑證就好。如果它沒有一樣的 provider，改角色檔的 `route:` 一行，或在 patch 裡加一張 `routes` 別名表把八個角色指過去。
+兩行，八個角色就能用。什麼都不用複製，也沒有設定要改：角色檔已經各自指名 `provider/model`，插件會用那台機器自己註冊的 provider 目錄解析。唯一的前提是那台有這些 provider 與憑證——以及你自己的 `$DSH_HOME/agents`（如果存在）沒有用自己的檔案蓋掉內建角色。
+
+如果那台少了內建角色指名的 provider，兩條路：把在意的那幾個角色複製到 `$DSH_HOME/agents` 再改 `route:`（複製過才會在升級時保住你的修改），或在 patch 裡加一張 `routes` 別名表一次把八個指過去。
 
 ### 發布
 
-套件本身就可以發布；`files` 已經把 tarball 限制在 `lib`、`examples`、patch、兩份 README 與授權，`publishConfig.access` 是 `public`。發布前先確認：
+套件本身就可以發布；`files` 已經把 tarball 限制在 `lib`、`roles`、patch、兩份 README 與授權，`publishConfig.access` 是 `public`。發布前先確認：
 
 ```sh
 npm pack --dry-run

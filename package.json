@@ -1,8 +1,8 @@
 {
   "name": "dsh-roles-zeta",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files",
+  "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files, with a roster that ships and stays overridable",
   "license": "MIT",
   "keywords": [
     "dsh-plugin",
@@ -23,7 +23,7 @@
   },
   "files": [
     "lib",
-    "examples",
+    "roles",
     "cordis.patch.yml",
     "README.md",
     "README.zh-TW.md",

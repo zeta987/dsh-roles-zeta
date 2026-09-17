@@ -21,27 +21,21 @@ the file is written.
 ### Install
 
 ```sh
-# 1. Install the bundle into each profile that will use it.
-#    Profiles are separate install roots, so one profile does not see another's.
+# Install the bundle into each profile that will use it. Profiles are separate
+# install roots, so one profile does not see another's.
 dsh plugin --profile web add dsh-roles-zeta
 
-# 2. Copy the role files into place.
-#    The package ships eight of them; the plugin reads $DSH_HOME/agents
-#    ($DSH_HOME defaults to ~/.dsh).
-mkdir -p "$HOME/.dsh/agents"
-cp node_modules/dsh-roles-zeta/examples/roles/*.md "$HOME/.dsh/agents/"
-
-# 3. Restart the host. Bundle lists are read when a profile is composed.
+# Restart the host. Bundle lists are read when a profile is composed.
 ```
 
-Then a new session has a `delegate` tool whose description lists the roles.
-Nothing else needs configuring: no preset copy, no model table.
+That is the whole install. A new session then has a `delegate` tool whose
+description lists eight roles, with no preset copy, no model table, and nothing
+to place by hand: the roster ships inside the package and is read from there.
 
 ### Role files
 
-One Markdown file per role under the configured directory (`$DSH_HOME/agents` by
-default). Frontmatter carries the machine fields; the body is the child's
-`deployment:persona-prefix` section.
+A role is one Markdown file. Frontmatter carries the machine fields; the body is
+the child's `deployment:persona-prefix` section.
 
 ```markdown
 ---
@@ -64,10 +58,41 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 | `effort` | no | Effort in the role vocabulary, translated per route |
 | `allow` | no | Global tool names the child keeps; omitted inherits everything |
 | `delegation` | no | `true` keeps the delegation tools in a child that has no `allow` list |
+| `disabled` | no | `true` removes a shipped role without needing a replacement body |
 
 A role with an `allow` list cannot delegate unless the list names the delegation
 tools. A role without one cannot delegate unless it sets `delegation: true`.
 Delegation is opt-in because every source definition that is a leaf says so.
+
+#### Where roles load from
+
+Two roots, applied in this order, later winning:
+
+1. **the package's own roster** — `<package>/roles/*.md`, the eight that ship;
+2. **`$DSH_HOME/agents`** — your directory, `$DSH_HOME` defaulting to `~/.dsh`.
+
+So the shipped roles work immediately, and a file you drop into your own
+directory **replaces the shipped one by id**. Edit a shipped role by copying it
+out first:
+
+```sh
+cp node_modules/dsh-roles-zeta/roles/reviewer.md "$HOME/.dsh/agents/reviewer.md"
+$EDITOR "$HOME/.dsh/agents/reviewer.md"
+```
+
+Remove one you do not want with a stub that carries only an id:
+
+```markdown
+---
+id: hypothesis-debate
+disabled: true
+---
+```
+
+Nothing is ever copied into your directory by the plugin, so the shipped roster
+keeps improving with the package while your overrides stay yours. A duplicate id
+inside one directory keeps the first file and warns; a `disabled` stub in your
+directory always wins over a shipped role.
 
 ### Configuration
 
@@ -88,7 +113,7 @@ files name their own route and the plugin resolves it.
 | Field | Default | Meaning |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`, else `~/.dsh` | Harness home the role directory is derived from |
-| `rolesDir` | `$DSH_HOME/agents` | Directory scanned for `*.md` role files |
+| `rolesDir` | `$DSH_HOME/agents` | Your role directory, which overrides the shipped roster by id |
 | `provider` | `spawn` | `ctx.subagents` provider name |
 | `toolName` | `delegate` | Model-facing tool name |
 | `backgroundMode` | `continuable` | `continuable` returns a durable child id; `one-shot` returns a job id |
@@ -189,31 +214,26 @@ are read when the profile is composed.
 ### Installing on another machine
 
 ```sh
-# 1. Install the bundle into each profile that will use it.
 dsh plugin --profile web add dsh-roles-zeta
-
-# 2. Put the role files where the plugin looks for them.
-#    The published package ships them, so copy them straight out of node_modules:
-#      $DSH_HOME/profiles/web/node_modules/dsh-roles-zeta/examples/roles/*.md
-#    into
-#      $DSH_HOME/agents/          ($DSH_HOME defaults to ~/.dsh)
-#    Create the directory if it does not exist. Cloning the repository and
-#    copying its examples/roles/ works just as well.
-
-# 3. Restart the host.
+# restart the host
 ```
 
-No configuration needs editing. Each role file already names its own
-`provider/model`, and the plugin resolves those against whatever providers the
-target machine registers, so the only requirement is that the machine has those
-providers configured and credentialed. If it does not, change the `route:` line
-in the affected role files, or add a `routes` alias table to point all eight at
-once.
+Two commands, and the eight roles are live. Nothing has to be copied, and no
+configuration needs editing: each role file already names its own `provider/model`,
+and the plugin resolves those against whatever providers the target machine
+registers. The only requirement is that the machine has those providers
+configured and credentialed — and that your own `$DSH_HOME/agents`, if it exists,
+does not shadow the shipped roles with files of its own.
+
+If the target machine lacks a provider the shipped roles name, either change the
+`route:` line in the roles you care about — copy them into `$DSH_HOME/agents`
+first, so an upgrade does not overwrite the change — or add a `routes` alias
+table to point all eight at once from one place.
 
 ### Publishing
 
 The package is publishable as-is; `files` already limits the tarball to `lib`,
-`examples`, the patch, both READMEs and the license, and
+`roles`, the patch, both READMEs and the license, and
 `publishConfig.access` is `public`. Verify before publishing:
 
 ```sh
