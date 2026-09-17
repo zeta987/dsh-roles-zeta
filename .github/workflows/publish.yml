@@ -13,7 +13,11 @@
 #      runs without `registry-url` and the token file is written only when a
 #      token exists.
 #   2. A granular access token stored as the NPM_TOKEN repository secret, used
-#      only when it is set. Either path publishes with provenance attestation.
+#      only when it is set.
+#
+# Provenance attestation is switched on only while the repository is public:
+# npm does not generate provenance for a private repository, so the flag
+# follows `github.event.repository.private` instead of being hard-coded.
 name: publish
 
 on:
@@ -53,6 +57,7 @@ jobs:
       - name: Publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: ${{ !github.event.repository.private }}
         run: |
           if [ -n "$NPM_TOKEN" ]; then
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
@@ -60,4 +65,5 @@ jobs:
           else
             echo "publishing with npm trusted publishing (OIDC)"
           fi
-          npm publish --provenance --access public
+          echo "provenance: $NPM_CONFIG_PROVENANCE"
+          npm publish --access public
