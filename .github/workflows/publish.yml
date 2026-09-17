@@ -4,6 +4,9 @@
 # version in package.json; the job refuses to publish a mismatch so a stale
 # package.json cannot ship under a newer tag.
 #
+# After a successful publish the job also creates the GitHub Release for the
+# tag, so the Releases page and npm never disagree.
+#
 # Credentials, in order of preference:
 #   1. npm trusted publishing (OIDC). Configure the trusted publisher on npmjs.com
 #      (package → Settings → Trusted Publishers: repository zeta987/dsh-roles-zeta,
@@ -26,7 +29,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -67,3 +70,24 @@ jobs:
           fi
           echo "provenance: $NPM_CONFIG_PROVENANCE"
           npm publish --access public
+
+      # A GitHub Release per published version: the same tarball npm received,
+      # the install command, README links, and GitHub's generated change notes.
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          tarball="$(npm pack --silent)"
+          base="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME"
+          cat > release-notes.md <<EOF
+          Install or update:
+
+          \`\`\`sh
+          dsh plugin --profile web add dsh-roles-zeta@$version
+          # restart the host
+          \`\`\`
+
+          README: [English]($base/README.md) · [繁體中文]($base/README.zh-TW.md) · [简体中文]($base/README.zh-CN.md)
+          EOF
+          gh release create "$GITHUB_REF_NAME" "$tarball" --title "dsh-roles-zeta $version" --notes-file release-notes.md --generate-notes
