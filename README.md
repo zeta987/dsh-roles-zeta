@@ -1,15 +1,10 @@
----
-description: "Role-based subagent delegation for DeepSeek Harness: one `delegate` tool over a folder of role files, for users who keep a roster of specialist subagents."
-kind: "package-reference"
----
-
-# dsh-role-agents
-
 English | [繁體中文](README.zh-TW.md)
+
+# dsh-roles-zeta
 
 ## Summary
 
-`dsh-role-agents` gives a dsh agent one `delegate` tool and a folder of role
+`dsh-roles-zeta` gives a dsh agent one `delegate` tool and a folder of role
 files. A call names a role; the role file supplies that child's persona, its
 model route, its reasoning effort, and its tool surface. It is a thin layer over
 the same `ctx.subagents` service the built-in `subagent` tool uses, so providers,
@@ -28,13 +23,13 @@ the file is written.
 ```sh
 # 1. Install the bundle into each profile that will use it.
 #    Profiles are separate install roots, so one profile does not see another's.
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # 2. Copy the role files into place.
 #    The package ships eight of them; the plugin reads $DSH_HOME/agents
 #    ($DSH_HOME defaults to ~/.dsh).
 mkdir -p "$HOME/.dsh/agents"
-cp node_modules/dsh-role-agents/examples/roles/*.md "$HOME/.dsh/agents/"
+cp node_modules/dsh-roles-zeta/examples/roles/*.md "$HOME/.dsh/agents/"
 
 # 3. Restart the host. Bundle lists are read when a profile is composed.
 ```
@@ -78,8 +73,8 @@ Delegation is opt-in because every source definition that is a leaf says so.
 
 ```yaml
 - insert:
-    - id: role-agents
-      name: dsh-role-agents
+    - id: roles-zeta
+      name: dsh-roles-zeta
       config:
         provider: spawn
         toolName: delegate
@@ -173,13 +168,13 @@ needed; moving the row into your own preset instead scopes it to that preset.
 
 ```sh
 # From npm.
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # Straight from the repository, if you would rather track it directly.
-dsh plugin --profile web add github:zeta987/dsh-role-agents
+dsh plugin --profile web add github:zeta987/dsh-roles-zeta
 
 # From a local clone, while developing this plugin.
-dsh plugin --profile web add file:./dsh-role-agents
+dsh plugin --profile web add file:./dsh-roles-zeta
 ```
 
 `github:` and `file:` installs are copies, so edits to a clone reach the host
@@ -195,11 +190,11 @@ are read when the profile is composed.
 
 ```sh
 # 1. Install the bundle into each profile that will use it.
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # 2. Put the role files where the plugin looks for them.
 #    The published package ships them, so copy them straight out of node_modules:
-#      $DSH_HOME/profiles/web/node_modules/dsh-role-agents/examples/roles/*.md
+#      $DSH_HOME/profiles/web/node_modules/dsh-roles-zeta/examples/roles/*.md
 #    into
 #      $DSH_HOME/agents/          ($DSH_HOME defaults to ~/.dsh)
 #    Create the directory if it does not exist. Cloning the repository and
@@ -236,7 +231,7 @@ The name is unscoped because the package is public. A scoped name is only
 required for a private package, which npm serves on a paid plan; publishing
 publicly under a scope is allowed but buys nothing.
 
-The repository lives at `github.com/zeta987/dsh-role-agents` and carries the
+The repository lives at `github.com/zeta987/dsh-roles-zeta` and carries the
 community topics `dsh-plugin`, `dsh`, `deepseek-harness`, `cordis`, `ai-agents`,
 `subagent`, and `multi-agent` — the first three are the convention every dsh
 plugin repo shares. `dsh-plugin` is what makes a plugin discoverable at

@@ -1,15 +1,10 @@
----
-description: "DeepSeek Harness 的角色化子代理委派：一支 delegate 工具加一個角色檔資料夾，給維護專家子代理名冊的使用者。"
-kind: "package-reference"
----
-
-# dsh-role-agents
-
 [English](README.md) | 繁體中文
+
+# dsh-roles-zeta
 
 ## 摘要
 
-`dsh-role-agents` 給 dsh agent 一支 `delegate` 工具與一個角色檔資料夾。呼叫時指定角色，角色檔提供該 child 的 persona、模型路線、reasoning effort 與工具範圍。它是同一個 `ctx.subagents` 服務之上的薄層，所以 provider、深度計算、durable descriptor、續談、子代理目錄與背景結算通知全部照舊。
+`dsh-roles-zeta` 給 dsh agent 一支 `delegate` 工具與一個角色檔資料夾。呼叫時指定角色，角色檔提供該 child 的 persona、模型路線、reasoning effort 與工具範圍。它是同一個 `ctx.subagents` 服務之上的薄層，所以 provider、深度計算、durable descriptor、續談、子代理目錄與背景結算通知全部照舊。
 
 內建的 `subagent` 與 `subagent_fork` 沒有被取代，應該繼續掛著。它們回答的是另一個問題：讓模型在每次呼叫時從 session 允許清單裡挑路線；而角色是寫檔時就固定的綁定。
 
@@ -20,13 +15,13 @@ kind: "package-reference"
 ```sh
 # 1. 裝進你會用到的每個 profile。
 #    profile 是各自獨立的安裝根，裝進一個對另一個不可見。
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # 2. 把角色檔放到位。
 #    套件裡已經附了八個；插件讀的是 $DSH_HOME/agents
 #    （$DSH_HOME 預設是 ~/.dsh）。
 mkdir -p "$HOME/.dsh/agents"
-cp node_modules/dsh-role-agents/examples/roles/*.md "$HOME/.dsh/agents/"
+cp node_modules/dsh-roles-zeta/examples/roles/*.md "$HOME/.dsh/agents/"
 
 # 3. 重啟 host。bundle 清單是在組合 profile 時讀取的。
 ```
@@ -65,8 +60,8 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 
 ```yaml
 - insert:
-    - id: role-agents
-      name: dsh-role-agents
+    - id: roles-zeta
+      name: dsh-roles-zeta
       config:
         provider: spawn
         toolName: delegate
@@ -126,13 +121,13 @@ host-plane row 對每個 preset 的每個 agent 都可見，所以不需要複�
 
 ```sh
 # 從 npm 安裝。
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # 直接跟 repo 走，如果你想盯著原始碼。
-dsh plugin --profile web add github:zeta987/dsh-role-agents
+dsh plugin --profile web add github:zeta987/dsh-roles-zeta
 
 # 從本機 clone 安裝，開發這個插件時用。
-dsh plugin --profile web add file:./dsh-role-agents
+dsh plugin --profile web add file:./dsh-roles-zeta
 ```
 
 `github:` 與 `file:` 都是複製品，所以改完 clone 要重跑命令才會進到 host。只有在開發這個 plugin 時才用 `link:`：`link:` 是 symlink 來源目錄，Node 會從來源的 realpath 解析套件的 peer import，因此旁邊需要一個 `node_modules` junction（見 `.gitignore`）。
@@ -143,11 +138,11 @@ dsh plugin --profile web add file:./dsh-role-agents
 
 ```sh
 # 1. 裝進你會用到的每個 profile。
-dsh plugin --profile web add dsh-role-agents
+dsh plugin --profile web add dsh-roles-zeta
 
 # 2. 把角色檔放到插件讀取的位置。
 #    發布的套件裡就有，所以直接從 node_modules 複製：
-#      $DSH_HOME/profiles/web/node_modules/dsh-role-agents/examples/roles/*.md
+#      $DSH_HOME/profiles/web/node_modules/dsh-roles-zeta/examples/roles/*.md
 #    複製到
 #      $DSH_HOME/agents/          （$DSH_HOME 預設是 ~/.dsh）
 #    目錄不存在就建立。clone 這個 repo 再複製它的 examples/roles/ 也一樣。
@@ -170,7 +165,7 @@ npm publish
 
 名字不帶 scope，因為套件是公開的。**只有私有套件才強制要 scope**，而 npm 的私有套件要付費方案；公開套件掛 scope 並不違法，只是沒有好處。
 
-repo 在 `github.com/zeta987/dsh-role-agents`，掛的 topics 是 `dsh-plugin`、`dsh`、`deepseek-harness`、`cordis`、`ai-agents`、`subagent`、`multi-agent`——前三個是每個 dsh 插件 repo 共通的慣例，其中 `dsh-plugin` 是讓插件能在 <https://github.com/topics/dsh-plugin> 被找到的那個。
+repo 在 `github.com/zeta987/dsh-roles-zeta`，掛的 topics 是 `dsh-plugin`、`dsh`、`deepseek-harness`、`cordis`、`ai-agents`、`subagent`、`multi-agent`——前三個是每個 dsh 插件 repo 共通的慣例，其中 `dsh-plugin` 是讓插件能在 <https://github.com/topics/dsh-plugin> 被找到的那個。
 
 想改成私有發布的話，npmjs 用 `"publishConfig": { "access": "restricted" }`（需要付費方案），或指向 GitHub Packages：`"registry": "https://npm.pkg.github.com"`，並在 `.npmrc` 加 `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`。從 GitHub Packages 安裝的機器也要有同一條 scoped registry 設定，因為 `dsh plugin` 是直接在 profile 目錄轉發給 pnpm，而 pnpm 讀的是那裡或使用者家目錄的 `.npmrc`。
 

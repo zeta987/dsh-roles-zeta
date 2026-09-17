@@ -1,5 +1,5 @@
 {
-  "name": "dsh-role-agents",
+  "name": "dsh-roles-zeta",
   "version": "0.1.0",
   "type": "module",
   "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files",
@@ -31,11 +31,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zeta987/dsh-role-agents.git"
+    "url": "git+https://github.com/zeta987/dsh-roles-zeta.git"
   },
-  "homepage": "https://github.com/zeta987/dsh-role-agents#readme",
+  "homepage": "https://github.com/zeta987/dsh-roles-zeta#readme",
   "bugs": {
-    "url": "https://github.com/zeta987/dsh-role-agents/issues"
+    "url": "https://github.com/zeta987/dsh-roles-zeta/issues"
   },
   "publishConfig": {
     "access": "public"

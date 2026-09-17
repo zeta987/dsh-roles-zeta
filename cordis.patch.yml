@@ -1,4 +1,4 @@
-# The dsh-role-agents bundle patch: one host-plane row that registers the
+# The dsh-roles-zeta bundle patch: one host-plane row that registers the
 # `delegate` tool over the host `ctx.subagents` seam.
 #
 # Host plane on purpose: the subagent registry and its spawn/fork providers are
@@ -32,11 +32,11 @@
 # validated against it.
 
 - insert:
-    - id: role-agents
+    - id: roles-zeta
       # The row names this package by its own package name, the same way a
       # bundle patch normally does. A fork republished under another name must
       # update this line to match.
-      name: dsh-role-agents
+      name: dsh-roles-zeta
       config:
         provider: spawn
         toolName: delegate
