@@ -50,6 +50,23 @@ The bundle also ships a browser half, so the Web profile needs the restart even
 under `patchReload: live`; the host serves client bundles it found when the
 profile was composed.
 
+#### Updating
+
+Nothing updates on its own. `dsh plugin` forwards to pnpm inside the profile,
+which records the version it resolved in the profile's lockfile, and starting
+the host installs nothing. A new release reaches a profile only when you ask
+for it:
+
+```sh
+dsh plugin --profile web add dsh-roles-zeta@latest
+# restart the host
+```
+
+Name the version explicitly: the `^0.x` range pnpm wrote at install time does
+not cross a minor bump, so `pnpm update` alone stays on the old line. Role files
+you edited are left alone by the update; the shipped ones you never touched are
+refreshed on the next load.
+
 ### Slash commands
 
 Every loaded role is also a command in the Web input box. Type `/` to see them
@@ -242,8 +259,10 @@ roles can say `route: deep` and this file decides what `deep` means here:
 
 Effort is not configured at all. Each route's adapter advertises its own
 reasoning levels through `LlmResolvedModelInfo.reasoning`, and the effort a role
-declares is clamped onto them: `xhigh` lands on `max` where that exists and on
-`high` where it does not. The vocabulary a role file may use is
+declares moves to the nearest level the route offers, the higher one on a tie.
+`deepseek-flash` offers `off`/`low`/`high`/`max`, so there `medium` becomes
+`high` and `xhigh` becomes `max`; the shipped roles all say `high`, which every
+route offers as-is. The vocabulary a role file may use is
 `off`/`minimal`/`low`/`medium`/`high`/`xhigh`/`max`; a substitution is reported
 in the delegation result.
 

@@ -2,7 +2,7 @@
 id: code-mapper-lite
 when: "Fast read-only code mapper for narrowing relevant files, symbols, entry points, and likely call paths."
 route: deepseek-official/deepseek-flash
-effort: medium
+effort: high
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---
 

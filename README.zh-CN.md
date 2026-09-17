@@ -32,6 +32,17 @@ ls ~/.dsh/agents
 
 这个 bundle 也带了浏览器端，所以就算 Web profile 开着 `patchReload: live` 也要重启一次；host 只提供组合 profile 时找到的 client bundle。
 
+#### 更新
+
+不会自动更新。`dsh plugin` 是在 profile 目录里转发给 pnpm，解析到的版本会记在 profile 的 lockfile；启动 host 不会安装任何东西。新版本只有在你主动要求时才会进到 profile：
+
+```sh
+dsh plugin --profile web add dsh-roles-zeta@latest
+# 重启 host
+```
+
+版本要明确写出：安装时 pnpm 写下的 `^0.x` 范围不会跨过 minor 版本号，单靠 `pnpm update` 会停在旧的那条线上。你改过的角色文件更新时不会动；没碰过的内置角色会在下次加载时刷新。
+
 ### 斜杠指令
 
 每个加载的角色同时也是 Web 输入框里的一条指令。输入 `/` 就会看到它们和内置的 `/plan`、`/goal`、`/compact` 并列，旁边是各自的 `when` 说明；`/reviewer look at lib/index.js` 会排进一轮对话，要求 agent 以 `reviewer` 角色调用 `delegate`、把这段文字当任务、在前台跑完并转述结果。指令本身不会直接启动 child：指令 handler 跑在任何模型回合之外，若子代理的结果根本没回到模型手上，就没有人能转述它；所以委派留在对话记录里，就是一次普通的工具调用，跟 `/plan <message>` 放消息的位置相同。
@@ -169,7 +180,7 @@ disabled: true
           deep: { provider: deepseek-official, model: deepseek-flash }
 ```
 
-effort 完全不需要配置。每条路线的 adapter 会通过 `LlmResolvedModelInfo.reasoning` 声明自己的推理层级，角色声明的 effort 会被夹到那些层级上：`xhigh` 在有的路线落到 `max`、在没有的落到 `high`。角色文件可用的词汇是 `off`／`minimal`／`low`／`medium`／`high`／`xhigh`／`max`，发生替换时会在委派结果里注明。
+effort 完全不需要配置。每条路线的 adapter 会通过 `LlmResolvedModelInfo.reasoning` 声明自己的推理层级，角色声明的 effort 会移到该路线最接近的层级，同距离取较高的那个。`deepseek-flash` 提供 `off`／`low`／`high`／`max`，所以在它上面 `medium` 会变成 `high`、`xhigh` 会变成 `max`；内置角色一律写 `high`，每条路线都直接提供这一级。角色文件可用的词汇是 `off`／`minimal`／`low`／`medium`／`high`／`xhigh`／`max`，发生替换时会在委派结果里注明。
 
 角色也可以改用行内的 `model: { provider, model }` 取代别名；调用本身还可以用自己的 `provider`／`model` 覆盖两者。
 

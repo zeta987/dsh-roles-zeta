@@ -2,7 +2,7 @@
 id: hypothesis-debate
 when: "Root-cause investigator that uses competing hypotheses, cross-examination, and evidence-based debate when the real cause is unclear."
 route: deepseek-official/deepseek-flash
-effort: xhigh
+effort: high
 allow: [glob, grep, read, web_fetch, web_search, skill, delegate, subagent, subagent_fork]
 delegation: true
 ---

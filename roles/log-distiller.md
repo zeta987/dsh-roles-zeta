@@ -2,7 +2,7 @@
 id: log-distiller
 when: "Fast read-only log distiller that compresses long logs, CI output, and stack traces into high-signal summaries."
 route: deepseek-official/deepseek-flash
-effort: medium
+effort: high
 allow: [glob, grep, read, web_fetch, web_search, skill]
 ---
 
