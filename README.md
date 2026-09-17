@@ -66,6 +66,8 @@ them and the menu refreshes. A role whose id collides with another plugin's
 command is skipped as a command (logged) and still works through the tool.
 `commands: false` mounts none; `commandPrefix: "r-"` gives `/r-reviewer`.
 
+![The Web input box with `/` typed: the roles listed as commands next to the built-in ones](https://raw.githubusercontent.com/zeta987/dsh-roles-zeta/main/docs/images/commands-en.png)
+
 ## Settings page
 
 Settings → **Role agents** lists the roster with a badge per role (shipped,
@@ -85,6 +87,8 @@ delegation toggle), and the persona. Saving writes `<id>.md` into
 The page is a browser module over JSON routes under `/__dsh/roles-zeta/`,
 gated by the same browser-session cookie and Host/Origin fence as the rest of
 the Web API. `settingsPage: false` mounts neither.
+
+![Settings → Role agents: the roster on top, the reviewer role open in the editor below](https://raw.githubusercontent.com/zeta987/dsh-roles-zeta/main/docs/images/settings-en.png)
 
 ## Role files
 

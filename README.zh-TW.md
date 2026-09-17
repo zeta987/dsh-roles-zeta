@@ -39,6 +39,8 @@ dsh plugin --profile web add dsh-roles-zeta@0.4.0
 
 指令跟著名冊走：新增、改名或移除角色都會重新註冊，選單自己更新。角色 id 撞到其他 plugin 的指令名時，該角色不註冊成指令（log 會說明），但仍可透過工具使用。`commands: false` 就完全不掛；`commandPrefix: "r-"` 得到 `/r-reviewer`。
 
+![Web 輸入框輸入 `/`：角色與內建指令並列](https://raw.githubusercontent.com/zeta987/dsh-roles-zeta/main/docs/images/commands-zh.png)
+
 ## 設定頁
 
 設定 → **角色代理** 列出名冊，每個角色有標籤（內建、自訂、已修改），一次編輯一個角色：id、`when` 說明、路線（session 允許的路線會列成建議）、推理強度、工具（目前已註冊工具的勾選清單，或「沿用全部」加上委派開關）以及角色指示。儲存會把 `<id>.md` 寫進 `$DSH_HOME/agents`，跟你手寫的是同一個檔案。
@@ -51,6 +53,8 @@ dsh plugin --profile web add dsh-roles-zeta@0.4.0
 | 恢復內建角色 | 八個一起做；你自己新增的角色一律不動 |
 
 這頁是 `/__dsh/roles-zeta/` 底下幾條 JSON 路由之上的瀏覽器模組，跟其他 Web API 一樣受瀏覽器 session cookie 與 Host／Origin 信任檢查把關。`settingsPage: false` 就兩者都不掛。
+
+![設定 → 角色代理：上方是名冊，下方開著 reviewer 的編輯器](https://raw.githubusercontent.com/zeta987/dsh-roles-zeta/main/docs/images/settings-zh.png)
 
 ## 角色檔
 

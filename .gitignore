@@ -14,3 +14,6 @@ Thumbs.db
 
 # A locally linked harness profile if one is ever created here.
 .pnpm-store/
+
+# Playwright MCP scratch output.
+.playwright-mcp/
