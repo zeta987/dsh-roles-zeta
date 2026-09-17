@@ -1,0 +1,41 @@
+# The dsh-role-agents bundle patch: one host-plane row that registers the
+# `delegate` tool over the host `ctx.subagents` seam.
+#
+# Host plane on purpose: the subagent registry and its spawn/fork providers are
+# process singletons mounted by `dsh-base` at the profile root, so this row
+# resolves the same instance every preset already uses. A row here is visible to
+# every agent in every preset, including `standard`, without copying a preset.
+#
+# Nothing in this file names a machine path. The role directory defaults to
+# `<dshHome>/agents` (`$DSH_HOME`, else `~/.dsh`); set `rolesDir` only to keep
+# roles somewhere else, and set `dshHome` only to read them from a harness home
+# other than the one this process resolved.
+#
+# Nothing here names a model either. A role names its own route — a bare model id
+# such as `deepseek-flash`, or an exact `provider/model` — and the plugin resolves
+# it against this Session's `subagent-model-selection` allowed routes first and
+# the registered provider catalogs second. Tick the models you want in the DSH
+# settings and the roles follow; switch machines and nothing in this file changes.
+#
+# `routes` is therefore optional and empty by default. Add an alias only when you
+# want indirection, so a role can say `deep` and this file decides what `deep`
+# means on this machine:
+#
+#   routes:
+#     deep: { provider: deepseek-official, model: deepseek-flash }
+#
+# `modelSelectionSettings` is deliberately absent. A standing composition with it
+# requires both a scoped preset Context and it would collide with the `subagent`
+# row that already owns the global `list_subagent_models` name. The tool reaches
+# the same setting through `ctx.get('subagentModelSelection')` instead: when a
+# Session has one enabled, `provider` and `model` become per-call parameters
+# validated against it.
+
+- insert:
+    - id: role-agents
+      name: '@zeta987/dsh-role-agents'
+      config:
+        provider: spawn
+        toolName: delegate
+        backgroundMode: continuable
+        maxDepth: 2

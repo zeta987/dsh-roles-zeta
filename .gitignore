@@ -1,0 +1,16 @@
+# The plugin's own module resolution directory. On a development machine this is
+# a junction into the harness profile's hoisted `node_modules`, which makes bare
+# peer imports resolve from a `link:`-installed copy. It is machine-local and
+# must never be committed; a normal `file:` or git install does not need it.
+node_modules/
+
+# Editor and OS noise.
+.DS_Store
+Thumbs.db
+*.log
+
+# `npm pack` output.
+*.tgz
+
+# A locally linked harness profile if one is ever created here.
+.pnpm-store/

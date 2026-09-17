@@ -1,0 +1,64 @@
+{
+  "name": "@zeta987/dsh-role-agents",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Role-based subagent delegation for DeepSeek Harness: one delegate tool over a folder of role files",
+  "license": "MIT",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "subagent",
+    "agents"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "examples",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-TW.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zeta987/dsh-role-agents.git"
+  },
+  "homepage": "https://github.com/zeta987/dsh-role-agents#readme",
+  "bugs": {
+    "url": "https://github.com/zeta987/dsh-role-agents/issues"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-home-paths": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "yaml": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-home-paths": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    },
+    "yaml": {
+      "optional": true
+    }
+  },
+  "dependencies": {}
+}
