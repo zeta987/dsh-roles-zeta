@@ -28,9 +28,17 @@ dsh plugin --profile web add dsh-roles-zeta
 # Restart the host. Bundle lists are read when a profile is composed.
 ```
 
-That is the whole install. A new session then has a `delegate` tool whose
-description lists eight roles, with no preset copy, no model table, and nothing
-to place by hand: the roster ships inside the package and is read from there.
+That is the whole install. On the first load after the restart, the eight role
+files are written to `$DSH_HOME/agents` (`$DSH_HOME` defaults to `~/.dsh`), and a
+new session has a `delegate` tool whose description lists them. No preset copy, no
+model table, and nothing to place by hand.
+
+```sh
+ls ~/.dsh/agents
+# code-mapper-lite.md  explorer.md          log-distiller.md  triage.md
+# deep-coordinator.md  hypothesis-debate.md reviewer.md       worker.md
+# .seeded.json
+```
 
 ### Role files
 
@@ -71,16 +79,23 @@ Two roots, applied in this order, later winning:
 1. **the package's own roster** — `<package>/roles/*.md`, the eight that ship;
 2. **`$DSH_HOME/agents`** — your directory, `$DSH_HOME` defaulting to `~/.dsh`.
 
-So the shipped roles work immediately, and a file you drop into your own
-directory **replaces the shipped one by id**. Edit a shipped role by copying it
-out first:
+The package places its roster in your directory on first load, so the files are
+where a dsh user looks for agent definitions, the same way `~/.codex/agents` and
+`~/.claude/agents` work. They stay managed while you leave them alone:
 
-```sh
-cp node_modules/dsh-roles-zeta/roles/reviewer.md "$HOME/.dsh/agents/reviewer.md"
-$EDITOR "$HOME/.dsh/agents/reviewer.md"
-```
+| What you do | What happens on the next load |
+|---|---|
+| Nothing | Files this package wrote follow the package; a release that changes a role updates it |
+| Edit one | It becomes yours and is never overwritten again |
+| Delete one | It stays deleted; the manifest records that you removed it, so it is not restored |
+| Add one of your own | It loads alongside the shipped roles |
 
-Remove one you do not want with a stub that carries only an id:
+`.seeded.json` in that directory is the manifest that makes this work — it records
+what the package wrote, not what you changed. Delete a line there to hand a file
+back to the package, or delete it whole to let everything settle on the next load.
+
+A file you drop in **replaces the shipped one by id** even when the package did not
+write it. Remove a role you do not want at all with a stub carrying only an id:
 
 ```markdown
 ---
@@ -89,10 +104,10 @@ disabled: true
 ---
 ```
 
-Nothing is ever copied into your directory by the plugin, so the shipped roster
-keeps improving with the package while your overrides stay yours. A duplicate id
-inside one directory keeps the first file and warns; a `disabled` stub in your
-directory always wins over a shipped role.
+A duplicate id inside one directory keeps the first file and warns; a `disabled`
+stub always wins over a shipped role. Set `seedRolesDir: false` to keep the
+package from writing into your directory at all — the two roots still load, so the
+roster works and only your own files live there.
 
 ### Configuration
 
@@ -113,7 +128,8 @@ files name their own route and the plugin resolves it.
 | Field | Default | Meaning |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`, else `~/.dsh` | Harness home the role directory is derived from |
-| `rolesDir` | `$DSH_HOME/agents` | Your role directory, which overrides the shipped roster by id |
+| `rolesDir` | `$DSH_HOME/agents` | Your role directory: the seed target and the override root |
+| `seedRolesDir` | `true` | Write the shipped roster into `rolesDir` on load, and keep it current while unedited |
 | `provider` | `spawn` | `ctx.subagents` provider name |
 | `toolName` | `delegate` | Model-facing tool name |
 | `backgroundMode` | `continuable` | `continuable` returns a durable child id; `one-shot` returns a job id |

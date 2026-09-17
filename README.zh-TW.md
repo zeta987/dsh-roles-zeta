@@ -19,7 +19,14 @@ dsh plugin --profile web add dsh-roles-zeta
 # 重啟 host。bundle 清單是在組合 profile 時讀取的。
 ```
 
-這樣就裝完了。之後新開的 session 會有一支 `delegate` 工具，描述裡列出八個角色——不用複製 preset、不用任何模型表、也不用自己放任何檔案：名冊隨套件出貨，直接從套件裡讀。
+這樣就裝完了。**重啟後第一次載入時，八個角色檔會被寫進 `$DSH_HOME/agents`**（`$DSH_HOME` 預設 `~/.dsh`），之後新開的 session 就有一支 `delegate` 工具，描述裡列出它們。不用複製 preset、不用任何模型表、也不用自己放檔案。
+
+```sh
+ls ~/.dsh/agents
+# code-mapper-lite.md  explorer.md          log-distiller.md  triage.md
+# deep-coordinator.md  hypothesis-debate.md reviewer.md       worker.md
+# .seeded.json
+```
 
 ### 角色檔
 
@@ -57,14 +64,18 @@ Prioritize correctness, regressions, edge cases, and concurrency hazards.
 1. **套件內建名冊**——`<套件>/roles/*.md`，出貨的八個；
 2. **`$DSH_HOME/agents`**——你自己的目錄，`$DSH_HOME` 預設 `~/.dsh`。
 
-所以內建角色裝好就能用，而你放進自己目錄的檔案會**按 id 取代**內建的那個。要改內建角色，先複製出來：
+套件會在第一次載入時把名冊放進你的目錄，所以檔案就在 dsh 使用者會去找的地方——跟 `~/.codex/agents`、`~/.claude/agents` 一樣。**只要你沒動它們，它們就由套件管理**：
 
-```sh
-cp node_modules/dsh-roles-zeta/roles/reviewer.md "$HOME/.dsh/agents/reviewer.md"
-$EDITOR "$HOME/.dsh/agents/reviewer.md"
-```
+| 你做了什麼 | 下次載入時 |
+|---|---|
+| 什麼都沒做 | 套件寫進去的檔案跟著套件走；新版改了角色就會更新 |
+| 改過其中一個 | 那個檔案變成你的，永遠不會再被覆蓋 |
+| 刪掉一個 | 保持刪除；manifest 記著是你移除的，不會被復活 |
+| 自己加一個 | 與出廠角色一起載入 |
 
-不要的角色用只帶 id 的 stub 移除：
+那個目錄裡的 `.seeded.json` 就是讓這套規則成立的 manifest——它記的是「套件寫了什麼」，不是你改了什麼。想把手上的檔案交還給套件就刪掉對應那行，想全部重來就整個刪掉，下次載入會重新結算。
+
+你放進去的檔案會**按 id 取代**出廠角色，就算不是套件寫的也一樣。完全不要的角色用只帶 id 的 stub 移除：
 
 ```markdown
 ---
@@ -73,7 +84,7 @@ disabled: true
 ---
 ```
 
-插件**永遠不會**主動把檔案複製進你的目錄，所以內建名冊會隨套件一起更新，你的覆蓋檔也一直是你自己的。同一個目錄裡重複的 id 會保留第一個並警告；你自己目錄裡的 `disabled` stub 一定蓋過內建角色。
+同一個目錄裡重複的 id 會保留第一個並警告；`disabled` stub 一定蓋過出廠角色。設 `seedRolesDir: false` 可以完全禁止套件寫入你的目錄——兩層載入照常運作，名冊依然可用，只是你的目錄裡只會有你自己的檔案。
 
 ### 設定
 
@@ -93,7 +104,8 @@ disabled: true
 | 欄位 | 預設 | 語意 |
 |---|---|---|
 | `dshHome` | `$DSH_HOME`，否則 `~/.dsh` | 角色目錄所依據的 harness home |
-| `rolesDir` | `$DSH_HOME/agents` | 你自己的角色目錄，會按 id 覆蓋內建名冊 |
+| `rolesDir` | `$DSH_HOME/agents` | 你的角色目錄：植入目標，也是覆蓋根目錄 |
+| `seedRolesDir` | `true` | 載入時把出廠名冊寫進 `rolesDir`，未被改動的會跟著套件保持最新 |
 | `provider` | `spawn` | `ctx.subagents` 的 provider 名 |
 | `toolName` | `delegate` | 模型面工具名 |
 | `backgroundMode` | `continuable` | `continuable` 回傳 durable child id；`one-shot` 回傳 job id |
